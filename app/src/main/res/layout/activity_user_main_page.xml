@@ -6,33 +6,67 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:layout_margin="10dp"
+    android:background="@drawable/custom_background_color"
     tools:context=".UserMainPage">
 
     <TextView
 
         android:id="@+id/nameOfUser1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text=""
+        android:layout_width="match_parent"
+        android:layout_height="620dp"
         android:layout_gravity="center"
         android:textStyle="bold"
         android:textSize="14pt"
-        android:layout_marginTop="200dp"
+        android:background="@drawable/top_corner_radius"
+        android:layout_marginTop="20dp"
+        android:layout_marginRight="20dp"
+        android:layout_marginLeft="20dp"
+        android:layout_marginBottom="5dp"
         tools:layout_editor_absoluteX="145dp"
         tools:layout_editor_absoluteY="193dp"
         />
 
-    <TextView
-        android:id="@+id/usernameEmailTest"
-        android:layout_width="wrap_content"
+
+    <RelativeLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text=""
-        android:textStyle="bold"
-        android:textSize="14pt"
-        android:layout_gravity="center"
-        android:layout_marginTop="20dp"
-        tools:layout_editor_absoluteX="145dp"
-        tools:layout_editor_absoluteY="193dp"
-        />
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp">
+
+        <LinearLayout
+            android:id="@+id/topBox"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:background="@drawable/bottom_corner_radius">
+
+            <EditText
+                android:id="@+id/usernameEmailTest"
+                android:layout_width="290dp"
+                android:layout_height="35dp"
+                android:hint="Message Here"
+                android:textSize="8pt"
+                android:background="@android:color/transparent"
+                android:layout_gravity="center"
+                tools:layout_editor_absoluteX="145dp"
+                tools:layout_editor_absoluteY="193dp" />
+
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Send"
+            android:textAllCaps="false"
+            android:textSize="12pt"
+            android:textStyle="bold"
+            android:textColor="#3696FB"
+            android:layout_centerVertical="true"
+            android:layout_marginRight="8dp"
+            android:layout_alignEnd="@+id/topBox"
+            android:layout_alignRight="@+id/topBox"
+            android:layout_marginEnd="10dp" />
+
+
+    </RelativeLayout>
+
 </LinearLayout>

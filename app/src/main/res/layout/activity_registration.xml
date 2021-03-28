@@ -14,36 +14,45 @@
         android:layout_marginTop="100dp"
         android:layout_gravity="center"
         android:textSize="14pt"
+        android:textStyle="bold|italic"
         android:text="Registration"/>
 
     <EditText
         android:id="@+id/usernameEmail"
-        android:layout_width="300dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp"
         android:hint="Email"
         android:layout_gravity="center"
         android:layout_marginTop="60dp"/>
 
     <EditText
         android:id="@+id/registerPassword"
-        android:layout_width="300dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp"
         android:hint="Password"
         android:layout_gravity="center"
         android:layout_marginTop="10dp"/>
 
     <EditText
         android:id="@+id/nameOfUser"
-        android:layout_width="300dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp"
         android:hint="Name"
         android:layout_gravity="center"
         android:layout_marginTop="10dp"/>
 
     <EditText
         android:id="@+id/phoneNumber"
-        android:layout_width="300dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp"
         android:hint="Phone"
         android:layout_gravity="center"
         android:layout_marginTop="10dp"/>
@@ -55,6 +64,8 @@
         android:textAllCaps="false"
         android:layout_gravity="center"
         android:layout_marginTop="20dp"
+        android:textSize="12pt"
+        android:backgroundTint="#3FBCFF"
         android:text="Register"/>
 
 </LinearLayout>

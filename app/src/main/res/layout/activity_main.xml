@@ -6,6 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:background="@drawable/custom_background_color2"
     tools:context=".MainActivity">
 
     <TextView
@@ -14,22 +15,28 @@
         android:layout_gravity="center"
         android:layout_marginTop="100dp"
         android:textSize="16pt"
-        android:textStyle="bold"
+        android:textStyle="bold|italic"
+        android:layout_marginBottom="80dp"
         android:text="Login Page"/>
 
 
     <EditText
         android:id="@+id/username"
-        android:layout_width="300dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp"
         android:layout_gravity="center"
-        android:hint="Email"
-        android:layout_marginTop="80dp"/>
+        android:ems="10"
+        android:inputType="textEmailAddress"
+        android:hint="Email"/>
 
     <EditText
         android:id="@+id/password"
-        android:layout_width="300dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp"
         android:layout_gravity="center"
         android:layout_marginTop="20dp"
         android:hint="Password"
@@ -38,10 +45,13 @@
 
     <Button
         android:id="@+id/login"
-        android:layout_width="100dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp"
         android:layout_gravity="center"
+        android:textSize="12pt"
+        android:backgroundTint="#3FBCFF"
         android:textAllCaps="false"
         android:text="Login" />
 
@@ -52,6 +62,7 @@
         android:layout_marginTop="20dp"
         android:layout_gravity="center"
         android:textSize="10pt"
+        android:textColor="#5C5B5A"
         android:textStyle="bold"
         android:text="Signup"/>
 </LinearLayout>
