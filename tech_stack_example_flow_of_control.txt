@@ -1,0 +1,75 @@
+Summary:
+
+	- Deployment:
+		- I will set up a Google Cloud Compute webserver for our project 
+
+	- Front End:
+		- ReactJS
+		- Modified UI from Chat App Client
+		- Deployed to https://SentimentScore.appspot.com for example
+
+	- Back End:
+		- Python 
+
+		- Modules:
+			- Both models will define a function:
+				predict(text: str) -> float
+
+			- Deep Neural Network Model
+				- Architecture implemented and trained in Keras
+
+			- Naive Bayes Model
+
+		- Server:
+			- REST architecture that will support two endpoints:
+
+			```POST https://SentimentScore.appspot.com/api/score/DNN```
+			```POST https://SentimentScore.appspot.com/api/score/NBayes```
+
+
+	- Example Flow of Control
+		1. Client browser loads webpage https://SentimentScore.appspot.com
+
+		2. Client browser loads modified chat app UI
+
+		3. User clicks a button to pick whether or not to select: { DNN model or NBayes model }
+
+		4. User enters into message box text: "Machine learning has way too much math"
+
+		5. User presses send button
+
+		6. React UI makes a HTTP request to the our backend api endpoint to the 
+			```
+			URL:
+				POST https://SentimentScore.appspot.com/api/score/DNN 		(if DNN button was selected)
+				POST https://SentimentScore.appspot.com/api/score/DNN 		(if NBayes button was selected)
+			Header:
+				Content-Type: application/json
+			Request Body:
+				{
+					"text" : "Machine learning is terrible because there is too math"
+				}
+			```
+
+		7. API receives and routes request to the appropriate ML model
+
+		8. ML model receives the text and calls predict(text: str) -> float
+
+		9. predict() analyses the text and outputs a probabiltiy value between 0 and 1 				{ 0 is most negative, 1 is most positive }
+
+		10. Probability value is scaled and rounded to a value between 0 and 5 and returned to API 	{ 0 is most negative, 5 is most positive }		
+
+		11. API generates and serves HTTP response to the fufill the request
+			Header:
+				Content-Type: application/json
+			Response Body:
+				{
+					"score" : 0
+				}
+			```
+
+		12. React parses the response, based on the score it received highlights one of the boxes {0 through 5} to show user the predicted sentiment score of their text
+
+		13. Repeat starting from step #3 until client leaves webpage
+
+
