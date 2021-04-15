@@ -53,6 +53,18 @@ const Chat = ({ location }) => {
     }
   }
 
+  // Check the users list to see if the bots have been added yet
+  const usersArr = Array.from(users)
+  const foundDNN = usersArr.some(el => el.name === "DNN Bot");
+  const foundNB = usersArr.some(el => el.name === "Naive Bayes Bot");
+  
+  // Add the bots only if they havent been added previously and there is atleast 1 user in the room
+  if(!foundNB && usersArr.length > 0)
+    users.push({id: usersArr[0].id, name: "Naive Bayes Bot", room: users[0].room})
+  if(!foundDNN && usersArr.length > 0)
+    users.push({id: usersArr[0].id, name: "DNN Bot", room: users[0].room})
+
+
   return (
     <div className="outerContainer">
       <div className="container">

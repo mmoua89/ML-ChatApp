@@ -17,6 +17,10 @@ app.use(router);
 io.on('connect', (socket) => {
   socket.on('join', ({ name, room }, callback) => {
     const { error, user } = addUser({ id: socket.id, name, room });
+    const { errDNN, userDNN } = addUser({ id: socket.id, name: "DNN Bot", room });
+
+    console.log(user.room + userDNN.room)
+    console.log(user.id + userDNN.id)
 
     if(error) return callback(error);
 
@@ -24,8 +28,11 @@ io.on('connect', (socket) => {
 
     socket.emit('message', { user: 'admin', text: `${user.name}, welcome to room ${user.room}.`});
     socket.broadcast.to(user.room).emit('message', { user: 'admin', text: `${user.name} has joined!` });
+    socket.broadcast.to(user.room).emit('message', { user: 'admin', text: `${userDNN.name} has joined!` });
 
     io.to(user.room).emit('roomData', { room: user.room, users: getUsersInRoom(user.room) });
+    io.to(userDNN.room).emit('roomData', { room: userDNN.room, users: getUsersInRoom(userDNN.room) });
+
 
     callback();
   });
