@@ -8,7 +8,7 @@ const TextContainer = ({ users }) => (
   <div className="textContainer">
     <div>
       <h1>SA Chat App</h1>
-      <h2>Developed by Meng and Devin</h2>
+      <h2>Developers: Meng and Devin</h2>
     </div>
     {
       users

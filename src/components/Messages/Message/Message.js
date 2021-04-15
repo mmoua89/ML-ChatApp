@@ -6,6 +6,10 @@ import ReactEmoji from 'react-emoji';
 
 const Message = ({ message: { text, user }, name }) => {
   let isSentByCurrentUser = false;
+  console.log("Innermost")
+  console.log(text)
+  console.log(user)
+  console.log("-----------")
 
   const trimmedName = name.trim().toLowerCase();
 
