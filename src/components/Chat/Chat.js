@@ -16,8 +16,8 @@ const urlDNN = `/api/predict/DNN&apikey=${apikey}`;
 let introSent = false;
 
 const Chat = ({ location }) => {
-  // ----------------------------------- Initialization -----------------------------------
 
+  // ----------------------------------- Initialization -----------------------------------
   useEffect(() => {
     if(!introSent)
       sendIntro()
@@ -135,7 +135,7 @@ const Chat = ({ location }) => {
       the sentiment of your message`) 
     }, introDelay); 
     setTimeout(function() { 
-      sendMessage("Admin", "Your message will be rated with a score from 0 (most negative) to 4 (most positive)") 
+      sendMessage("Admin", "Your message will be rated with a score from 0 (negative) to 4 (positive)") 
     }, scoreDelay); 
     introSent = true;
   }
