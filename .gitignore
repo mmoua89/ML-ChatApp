@@ -16,3 +16,5 @@ nupkg/
 /.pnp
 .pnp.js
 .DS_Store
+
+api/env/*
