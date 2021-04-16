@@ -1,0 +1,17 @@
+# npm
+node_modules
+package-lock.json
+*.log
+*.gz
+
+*.swp
+.~
+project.lock.json
+.DS_Store
+*.pyc
+nupkg/
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
