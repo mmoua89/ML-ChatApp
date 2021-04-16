@@ -1,18 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { useHistory, useParams } from 'react-router-dom'
 
 // Componenents
 import TextContainer from '../TextContainer/TextContainer';
 import Messages from '../Messages/Messages';
 import InfoBar from '../InfoBar/InfoBar';
 import Input from '../Input/Input';
-
 import './Chat.css';
 
-// REST API endpoints to Python ML server
-const apikey = "c55f8d138f6ccfd43612b15c98706943e1f4bea3";
-const urlNB = `/api/predict/NB&apikey=${apikey}`;
-const urlDNN = `/api/predict/DNN&apikey=${apikey}`;
+// REST API endpoints to ML prediction server
+const urlNB = "/api/predict/NaiveBayes";
+const urlDNN = "/api/predict/DeepNeuralNet";
 let introSent = false;
 
 const Chat = ({ location }) => {
@@ -51,7 +48,7 @@ const Chat = ({ location }) => {
   let params = {
     method: "POST",  
     headers: { "Content-type": "application/json" },  
-    body: JSON.stringify({ "Message" : message })
+    body: null
   }
 
   // ----------------------------------- Messaging Functions -----------------------------------
@@ -64,23 +61,24 @@ const Chat = ({ location }) => {
   // Generate a random delay between messages the bots send
   const getDelay = () => { return Math.floor(Math.random() * (1650 - 2250) ) + 2250;}
 
-  // Retrieve NB sentiment prediction from server for the user sent text
-  const getScoreNB = async () => {
+  // Retrieve NB sentiment prediction from ML server for the user sent text
+  const getScoreNB = async (userMsg) => {
+    params.body = JSON.stringify({ "Message" : message });
+    console.log(params);
     await(                                                                                                     
       fetch(urlNB, params)
       .then((response) => response.json())
       .then((scoreData) => { NB.score = scoreData.Score})
     ) .catch((err) => { console.log(err); }); 
-    NB.score = -1;
   }
-  // Retrieve DNN sentiment prediction from server for the user sent text
-  const getScoreDNN = async() => {
-    // await(
-    //   fetch(urlDNN, params)
-    //   .then((response) => response.json())
-    //   .then((scoreData) => { DNN.score = scoreData.Score})
-    // ) .catch((err) => { console.log(err); });
-    DNN.score = -1;
+  // Retrieve DNN sentiment prediction from ML server for the user sent text
+  const getScoreDNN = async(userMsg) => {
+    params.body = JSON.stringify({ "Message" : message });
+    await(
+      fetch(urlDNN, params)
+      .then((response) => response.json())
+      .then((scoreData) => { DNN.score = scoreData.Score})
+    ) .catch((err) => { console.log(err); });
   }
 
   const respondNB = async (userMsg, callback) => {
@@ -89,7 +87,7 @@ const Chat = ({ location }) => {
     let scoreDelay = repeatDelay + getDelay();
     setTimeout(function() { sendMessage(NB.name, NB.thinking) }, thinkDelay);               // Send thinking message
     setTimeout(function() { sendMessage(NB.name, NB.scoreMsg + NB.score) }, scoreDelay);    // Send user the sentiment score
-    getScoreNB();
+    await getScoreNB();
     if(callback)
       setTimeout(function() { callback(userMsg, function(){}) }, thinkDelay);               // Call the other bot if not yet called                                 
   }
@@ -100,7 +98,7 @@ const Chat = ({ location }) => {
     let scoreDelay = repeatDelay + getDelay();
     setTimeout(function() { sendMessage(DNN.name, DNN.thinking) }, thinkDelay);             // Send thinking message
     setTimeout(function() { sendMessage(DNN.name, DNN.scoreMsg + DNN.score) }, scoreDelay); // Send user the sentiment score
-    getScoreDNN();
+    await getScoreDNN();
     if(callback)
       setTimeout(function() { callback(userMsg, function(){}) }, thinkDelay);               // Call the other bot if not yet called                                 
   }

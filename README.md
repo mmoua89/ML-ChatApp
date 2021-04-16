@@ -1,4 +1,62 @@
-# Sentence Analysis Chat Application
 
-Setup:
-- run ```npm i && npm start``` for both client and server side to start the development server
+# Sentiment Analysis Chat Application
+
+## Overview  
+
+Sentiment analysis chat application runs between a user, **Naive Bayes Bot**, and a **Deep Neural Net Bot** to predict a sentiment score from 0 (negative) to 4 (positive) each time the user sends a message.
+
+### Development Quick Start
+---
+- From one terminal run ```yarn start-api```
+
+- From another terminal run ```yarn start```
+
+  
+
+## ML Prediction Server REST API Documentation
+
+Messages sent by the user are translated into a HTTP requests to the ML Prediction server at the following endpoints:
+
+```[POST] /api/predict/NaiveBayes```
+
+```[POST] /api/predict/DeepNeuralNet```
+
+Each endpoint will load its pretrained ML model and:
+- Run a prediction on the message specified by the request
+- Serve a response containing the predicted sentiment score
+  
+  
+### Request Formating
+---
+
+**HTTP POST** requests to the ML prediction server provide the following:
+
+```json
+headers: 
+{
+	"Content-type": "application/json"
+}
+```
+
+```json
+body: 
+{
+	"Message": "Include the message to run sentiment analysis on here"
+}
+```
+The request body should specify a JSON with the single attribute **Message** containing the message to run sentiment prediction on.
+
+---
+
+### Response Formating
+---
+
+**HTTP POST** requests to the ML prediction server will receive a reponse similar to the following body:
+
+```json
+{
+	"Score" : 4
+}
+```
+
+Where the response will contain a single Score attribute JSON with a value **between 0 and 4**.
