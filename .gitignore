@@ -18,3 +18,5 @@ nupkg/
 .DS_Store
 
 api/env/*
+Build_Instructions.txt
+.DS_Store
