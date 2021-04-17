@@ -1,5 +1,5 @@
 # Sentiment Analysis Chat Application
-Deployed at: https://sachatml.appspot.com/
+Deployed at: https://SAChatML.appspot.com/
 
 ## Overview
 
