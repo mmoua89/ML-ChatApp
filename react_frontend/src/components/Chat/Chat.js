@@ -31,31 +31,31 @@ const Chat = ({ location }) => {
     "Give me a few seconds to figure this out..."
   ]
   let answerMsgs = [
-    "Here's what I think about the sentiment score for your message: ",
-    "I give your message a sentiment score of: ",
-    "After some thinking, I would give your message a sentiment score of: ",
-    "Based on what I've seen before, I would say your message has a sentiment score of: ",
-    "It seems likely to me that your message has a sentiment score of: ",
-    "The sentiment score I would give your message is: ",
-    "I think the sentiment score of your message is: "
+    "Here's what I think about the sentiment of your message: ",
+    "I give your message a sentiment that is: ",
+    "After some thinking, I would give your message a sentiment that is: ",
+    "Based on what I've seen before, I would say your message has a sentiment that is: ",
+    "It seems likely to me that your message has a sentiment that is: ",
+    "The sentiment I would give your message is: ",
+    "I think the sentiment of your message is: "
   ]
 
   // Init bots
   let NB = {
     name: "Naive Bayes Bot", 
-    score: null, 
+    sentiment: null, 
     thinking: "",
     answer: ""
   }
   let DNN = {
-    name: "DNN Bot", 
-    score: null,
+    name: "Neural Net Bot", 
+    sentiment: null,
     thinking: "",
     answer: ""
   }
 
-  // Read name from URL on init
-  const humanUser = window.location.search.split('=')[1];                          
+  // Read name from URL on init, parse space characters
+  const humanUser = decodeURI(window.location.search.split('=')[1]);                        
   const [users, setUsers] = useState([
     { name: humanUser }, { name: NB.name }, { name: DNN.name }
   ]);
@@ -89,21 +89,21 @@ const Chat = ({ location }) => {
   }
 
   // Retrieve NB sentiment prediction from ML server for the user sent text
-  const getScoreNB = async (userMsg) => {
+  const getSentimentNB = async (userMsg) => {
     params.body = JSON.stringify({ "Message" : message });
     await(                                                                                                     
       fetch(urlNB, params)
       .then((response) => response.json())
-      .then((scoreData) => { NB.score = scoreData.Score})
+      .then((sentimentData) => { NB.sentiment = sentimentData.Sentiment})
     ) .catch((err) => { console.log(err); }); 
   }
   // Retrieve DNN sentiment prediction from ML server for the user sent text
-  const getScoreDNN = async(userMsg) => {
+  const getSentimentDNN = async(userMsg) => {
     params.body = JSON.stringify({ "Message" : message });
     await(
       fetch(urlDNN, params)
       .then((response) => response.json())
-      .then((scoreData) => { DNN.score = scoreData.Score})
+      .then((sentimentData) => { DNN.sentiment = sentimentData.Sentiment})
     ) .catch((err) => { console.log(err); });
   }
 
@@ -114,8 +114,8 @@ const Chat = ({ location }) => {
   } 
 
   const respondNB = async (userMsg, callback) => {
-    // Retrieve NB score from the ML prediction server for the message
-    await getScoreNB(userMsg);
+    // Retrieve NB sentiment from the ML prediction server for the message
+    await getSentimentNB(userMsg);
 
     // Randomly select thinking and answer responses
     NB.thinking = getResponse(thinkingMsgs, [DNN.thinking, NB.thinking]);
@@ -124,16 +124,16 @@ const Chat = ({ location }) => {
     // Render the bots messages
     let thinkDelay = getDelay();
     let repeatDelay = thinkDelay + getDelay();
-    let scoreDelay = repeatDelay + getDelay();
-    setTimeout(function() { sendMessage(NB.name, NB.thinking) }, thinkDelay);               // Send thinking message
-    setTimeout(function() { sendMessage(NB.name, NB.answer + NB.score) }, scoreDelay);      // Send user the sentiment score
+    let sentimentDelay = repeatDelay + getDelay();
+    setTimeout(function() { sendMessage(NB.name, NB.thinking) }, thinkDelay);                       // Send thinking message
+    setTimeout(function() { sendMessage(NB.name, NB.answer + NB.sentiment) }, sentimentDelay);      // Send user the sentiment
     if(callback)
-      setTimeout(function() { callback(userMsg, function(){}) }, thinkDelay);               // Call the other bot if not yet called                                 
+      setTimeout(function() { callback(userMsg, function(){}) }, thinkDelay);                       // Call the other bot if not yet called                                 
   }
 
   const respondDNN = async (userMsg, callback) => {
-    // Retrieve the DNN score from the ML prediction server for the message
-    await getScoreDNN(userMsg);
+    // Retrieve the DNN sentiment from the ML prediction server for the message
+    await getSentimentDNN(userMsg);
 
     // Randomly select thinking and answer responses
     DNN.thinking = getResponse(thinkingMsgs, [NB.thinking, DNN.thinking]);
@@ -142,11 +142,11 @@ const Chat = ({ location }) => {
     // Render the bots messages
     let thinkDelay = getDelay();
     let repeatDelay = thinkDelay + getDelay();
-    let scoreDelay = repeatDelay + getDelay();
-    setTimeout(function() { sendMessage(DNN.name, DNN.thinking) }, thinkDelay);             // Send thinking message
-    setTimeout(function() { sendMessage(DNN.name, DNN.answer + DNN.score) }, scoreDelay);   // Send user the sentiment score
+    let sentimentDelay = repeatDelay + getDelay();
+    setTimeout(function() { sendMessage(DNN.name, DNN.thinking) }, thinkDelay);                     // Send thinking message
+    setTimeout(function() { sendMessage(DNN.name, DNN.answer + DNN.sentiment) }, sentimentDelay);   // Send user the sentiment
     if(callback)
-      setTimeout(function() { callback(userMsg, function(){}) }, thinkDelay);               // Call the other bot if not yet called                                 
+      setTimeout(function() { callback(userMsg, function(){}) }, thinkDelay);                       // Call the other bot if not yet called                                 
   }
 
   const handleMessage = async (event) => {
@@ -169,7 +169,7 @@ const Chat = ({ location }) => {
   const sendIntro = () => {
     let welcomeDelay = getDelay() / 2;
     let introDelay = welcomeDelay + getDelay();
-    let scoreDelay = introDelay + getDelay();
+    let sentimentDelay = introDelay + getDelay();
     
     setTimeout(function() { 
       sendMessage("Admin", `Welcome to sentiment analyzer ${humanUser}!`) 
@@ -179,8 +179,8 @@ const Chat = ({ location }) => {
       the sentiment of your message`) 
     }, introDelay); 
     setTimeout(function() { 
-      sendMessage("Admin", "Your message will be rated with a score from 0 (negative) to 4 (positive)") 
-    }, scoreDelay); 
+      sendMessage("Admin", "Your message will be rated based on sentiment as either postive or negative") 
+    }, sentimentDelay); 
     introSent = true;
   }
 
@@ -189,7 +189,7 @@ const Chat = ({ location }) => {
   return (
     <div className="outerContainer">
       <div className="container">
-          <InfoBar room="SA ChatML"/>
+          <InfoBar room="SA Chat.ML"/>
           <Messages messages={messages} name={humanUser} />
           <Input message={message} setMessage={setMessage} sendMessage={handleMessage} />
       </div>

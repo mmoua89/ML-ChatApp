@@ -25,20 +25,24 @@ class NaiveBayes(Resource):
     
     # CALL MODEL PREDICT() here
     def predict(self, msg):
-        # score = self.model.predict(msg)
+        # isPositive = self.model.predict(msg)
 
-        # TEMPORARY FIXED SCORE until model implemented
-        score = random.uniform(0, 4)
+        # TEMPORARY RANDOM SENTIMENT until model implemented
+        isPositive = random.choice([True, False])
 
-        return round(score, 1)
+        return isPositive
 
     # POST endpoint reads Message text from request body, serves response with Score
     def post(self):
         args = parser.parse_args()
         msg = args['Message']
-        sentiment_score = self.predict(msg)
+        sentiment = self.predict(msg)
+        if(self.predict(msg)):
+            sentiment = "positive"
+        else:
+            sentiment = "negative"
 
-        return { 'Score' : sentiment_score }
+        return { 'Sentiment' : sentiment }
 
 
 class DeepNeuralNet(Resource):
@@ -52,20 +56,23 @@ class DeepNeuralNet(Resource):
     
     # CALL MODEL PREDICT() here
     def predict(self, msg):
-        # score = self.model.predict(msg)
+        # isPositive = self.model.predict(msg)
 
-        # TEMPORARY FIXED SCORE until model implemented
-        score = random.uniform(0, 4)
+        # TEMPORARY RANDOM SENTIMENT until model implemented
+        isPositive = random.choice([True, False])
 
-        return round(score, 1)
+        return isPositive
 
     # POST endpoint reads Message text from request body, serves response with Score
     def post(self):
         args = parser.parse_args()
         msg = args['Message']
-        sentiment_score = self.predict(msg)
+        if(self.predict(msg)):
+            sentiment = "positive"
+        else:
+            sentiment = "negative"
 
-        return { 'Score' : sentiment_score }
+        return { 'Sentiment' : sentiment }
 
 # Deployed production route, DO NOT use for development 
 # (cd to react_frontend and run yarn start and yarn start-api from two terminals instead)
