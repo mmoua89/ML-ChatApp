@@ -12,6 +12,8 @@ from pandas import read_csv
 from numpy import save
 from scipy.sparse import save_npz
 from copy import deepcopy
+from os import path
+import pickle
 
 # 50,000 move reviews with { positive, negative } labels
 data = read_csv('Cleaned_IMDB_Dataset.csv')
@@ -45,3 +47,6 @@ save('train/labels.npy', y_train)
 save_npz('train_and_val/word_vector.npz', x_train_and_val)
 save('train_and_val/labels.npy', y_train_and_val)
 
+# Save vectorizer to parse user messages later
+vectorizer_path = path.abspath(path.join(__file__ ,'../../api/Models'))
+pickle.dump(cv, open(vectorizer_path + "/vectorizer.pickle", "wb+"))
