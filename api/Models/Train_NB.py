@@ -110,8 +110,8 @@ if __name__ == '__main__':
         mul, com, ber = load_pretrained_models()
         print("\nTesting . . .")
         print('Accuracy score of MultinomialNB: ' + str('{:04.2f}'.format(test(mul) * 100)) + '%')
-        print('Accuracy score of MultinomialNB: ' + str('{:04.2f}'.format(test(com) * 100)) + '%')
-        print('Accuracy score of MultinomialNB: ' + str('{:04.2f}'.format(test(ber) * 100)) + '%')
+        print('Accuracy score of ComplementNB: ' + str('{:04.2f}'.format(test(com) * 100)) + '%')
+        print('Accuracy score of BernoulliNB: ' + str('{:04.2f}'.format(test(ber) * 100)) + '%')
 
 
 
