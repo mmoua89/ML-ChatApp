@@ -1,6 +1,7 @@
 '''
 Clean dataset by remoiving noise from html, symbols, stop words
 Stem words to their root word using nltk
+Dataset: http://ai.stanford.edu/~amaas/data/sentiment/
 '''
 
 # Libraries
