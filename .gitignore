@@ -20,3 +20,6 @@ nupkg/
 api/env/*
 Build_Instructions.txt
 .DS_Store
+api/Models/Trained_Models/NB_Bernoulli.sav
+api/Models/Trained_Models/NB_Complement.sav
+api/Models/Trained_Models/NB_Multinomial.sav
