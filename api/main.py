@@ -1,16 +1,15 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, jsonify
 from flask_restful import Resource, Api, reqparse
 from sklearn.feature_extraction.text import CountVectorizer
 from pandas import DataFrame
 import random
 import pickle  
+from clean_data import trim_data
 
-# Import clean_data from parent directory ML-ChatApp/data/clean_data.py
-import os, sys,inspect
-current_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-parent_dir = os.path.dirname(current_dir)
-sys.path.insert(0, parent_dir) 
-from data.clean_data import trim_data
+import keras
+from tensorflow.keras.layers.experimental.preprocessing import TextVectorization
+from keras.preprocessing.sequence import pad_sequences
+
 
 # Initialize ML prediction server
 app = Flask(__name__, static_folder="build/static", template_folder="build")
@@ -20,7 +19,6 @@ parser.add_argument("Message")
 
 
 class NaiveBayes(Resource):
-    # INITIALIZE PRE TRAINED MODEL HERE FROM FILE
     def load_model(self, path):
         return pickle.load(open(path, 'rb'))
 
@@ -48,25 +46,29 @@ class NaiveBayes(Resource):
         msg = self.parse_msg(msg)
         sentiment = self.model.predict(msg)[0]
 
-        return { 'Sentiment' : sentiment }
+        return jsonify({ 'Sentiment' : sentiment })
 
 
 class DeepNeuralNet(Resource):
-    # INITIALIZE PRE TRAINED MODEL HERE FROM FILE
-    def load_model(self, path):
-        return pickle.load(open(path, 'rb'))
-
     def __init__(self):
-        # self.model = load_model("/Models/Trained_Models/DNN_Model.sav")
-        pass
+        self.model = keras.models.load_model('Models/movie_lstm')
+        self.tokenizer = pickle.load(open('Models/review_tokenizer.pickle', 'rb'))
+
+    def vectorize(self, data):
+        vectorized_txt = self.tokenizer.texts_to_sequences(data['review'].values)
+        vectorized_txt = pad_sequences(vectorized_txt, padding='post', maxlen=100)
+        return vectorized_txt
+
+    def parse_msg(self, msg):
+        # Clean message
+        data = DataFrame({ 'review' : [msg] })
+        trim_data(data)
+        return self.vectorize(data)
     
     # CALL MODEL PREDICT() here
     def predict(self, msg):
-        # isPositive = self.model.predict(msg)
-
-        # TEMPORARY RANDOM SENTIMENT until model implemented
-        isPositive = random.choice([True, False])
-
+        msg_vector = self.parse_msg(msg)
+        isPositive = self.model.predict(msg_vector) > 0.5
         return isPositive
 
     # POST endpoint reads Message text from request body, serves response with Score
@@ -78,7 +80,7 @@ class DeepNeuralNet(Resource):
         else:
             sentiment = "negative"
 
-        return { 'Sentiment' : sentiment }
+        return jsonify({ 'Sentiment' : sentiment })
 
 # Deployed production route, DO NOT use for development 
 # (cd to react_frontend and run yarn start and yarn start-api from two terminals instead)

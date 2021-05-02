@@ -79,8 +79,8 @@ def load_data(data_path: str):
     y_train = np.load(data_path + '/train_and_val/labels.npy', allow_pickle=True)
     y_test = np.load(data_path + '/test/labels.npy', allow_pickle=True)
     print("Preprocessed data has been initialized")
-    print(x_test[0,:].shape)
-    print(x_test[0,:])
+    # print(x_test[0,:].shape)
+    # print(x_test[0,:])
 
     return (x_train, y_train, x_test, y_test)
 

@@ -114,9 +114,6 @@ const Chat = ({ location }) => {
   } 
 
   const respondNB = async (userMsg, callback) => {
-    // Retrieve NB sentiment from the ML prediction server for the message
-    await getSentimentNB(userMsg);
-
     // Randomly select thinking and answer responses
     NB.thinking = getResponse(thinkingMsgs, [DNN.thinking, NB.thinking]);
     NB.answer = getResponse(answerMsgs, [DNN.answer, NB.answer]);
@@ -126,15 +123,16 @@ const Chat = ({ location }) => {
     let repeatDelay = thinkDelay + getDelay();
     let sentimentDelay = repeatDelay + getDelay();
     setTimeout(function() { sendMessage(NB.name, NB.thinking) }, thinkDelay);                       // Send thinking message
+
+    // Retrieve NB sentiment from the ML prediction server for the message
+    await getSentimentNB(userMsg);
+
     setTimeout(function() { sendMessage(NB.name, NB.answer + NB.sentiment) }, sentimentDelay);      // Send user the sentiment
     if(callback)
       setTimeout(function() { callback(userMsg, function(){}) }, thinkDelay);                       // Call the other bot if not yet called                                 
   }
 
   const respondDNN = async (userMsg, callback) => {
-    // Retrieve the DNN sentiment from the ML prediction server for the message
-    await getSentimentDNN(userMsg);
-
     // Randomly select thinking and answer responses
     DNN.thinking = getResponse(thinkingMsgs, [NB.thinking, DNN.thinking]);
     DNN.answer = getResponse(answerMsgs, [NB.answer, DNN.answer]);
@@ -144,7 +142,11 @@ const Chat = ({ location }) => {
     let repeatDelay = thinkDelay + getDelay();
     let sentimentDelay = repeatDelay + getDelay();
     setTimeout(function() { sendMessage(DNN.name, DNN.thinking) }, thinkDelay);                     // Send thinking message
-    setTimeout(function() { sendMessage(DNN.name, DNN.answer + DNN.sentiment) }, sentimentDelay);   // Send user the sentiment
+
+    // Retrieve the DNN sentiment from the ML prediction server for the message
+    await getSentimentDNN(userMsg);
+
+    setTimeout(function() { sendMessage(DNN.name, DNN.answer + DNN.sentiment) }, sentimentDelay / 3);   // Send user the sentiment
     if(callback)
       setTimeout(function() { callback(userMsg, function(){}) }, thinkDelay);                       // Call the other bot if not yet called                                 
   }
@@ -156,13 +158,18 @@ const Chat = ({ location }) => {
     sendMessage(humanUser, message)
     setMessage('');
 
+    // Temporarily disable NB for DNN testing
+
     // Randomly alternate which bot responds to the message first
-    if(Math.random() < 0.5){
-      respondNB(userMsg, respondDNN)
-    }
-    else{
-      respondDNN(userMsg, respondNB);
-    }
+    // if(Math.random() < 0.5){
+    //   respondNB(userMsg, respondDNN)
+    // }
+    // else{
+    //   respondDNN(userMsg, respondNB);
+    // }
+
+
+    respondDNN(userMsg);
   }
 
   // Send introduction message once user joins room
