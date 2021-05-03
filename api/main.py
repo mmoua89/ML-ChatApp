@@ -1,3 +1,5 @@
+# -------------------------------------------------- Import Dependencies --------------------------------------------------
+
 from flask import Flask, render_template, jsonify
 from flask_restful import Resource, Api, reqparse
 from sklearn.feature_extraction.text import CountVectorizer
@@ -10,6 +12,12 @@ import keras
 from tensorflow.keras.layers.experimental.preprocessing import TextVectorization
 from keras.preprocessing.sequence import pad_sequences
 
+from tensorflow.python.lib.io.file_io import FileIO
+import contextlib
+import h5py
+
+# -------------------------------------------------- Setup Configuration --------------------------------------------------
+
 # Initialize ML prediction server
 app = Flask(__name__, static_folder="build/static", template_folder="build")
 api = Api(app)
@@ -18,29 +26,58 @@ parser.add_argument("Message")
 
 # GCP Credentials
 from google.cloud import storage
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "key.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "key.json"                                       
 client = storage.Client()
 bucket = client.get_bucket('sachatml.appspot.com')
 
-# Download model files from cloud storage
-@app.before_first_request
-def _load_model():
-    if not (os.path.exists('tmp/GloVe_LSTM_SA_Classifier.h5') and os.path.exists('tmp/lstm_vectorizer.pickle')):
-        load_files()
+# -------------------------------------------------- Initialization Functions --------------------------------------------------
 
-def load_files():
-    # Load model files from cloud storage
-    model_file = bucket.get_blob('DNN/GloVe_LSTM_SA_Classifier.h5')
-    vectorizer_file = bucket.get_blob('DNN/lstm_vectorizer.pickle')
-    model_file.download_to_filename('tmp/GloVe_LSTM_SA_Classifier.h5')
-    vectorizer_file.download_to_filename('tmp/lstm_vectorizer.pickle')
+def load_keras_model(gs_resource_path):
+    model_file = FileIO(gs_resource_path, mode='rb')
+    file_access_property_list = h5py.h5p.create(h5py.h5p.FILE_ACCESS)
+    file_access_property_list.set_fapl_core(backing_store=False)
+    file_access_property_list.set_file_image(model_file.read())  
+    file_id_args = {
+        'fapl': file_access_property_list,
+        'flags': h5py.h5f.ACC_RDONLY,
+        'name': b'this should never matter',
+    }
+    h5_file_args = {
+        'backing_store': False,
+        'driver': 'core',
+        'mode': 'r',
+    }
+    # Create temporary "file" in RAM to load (since Google AppEngine does not allow Read/Write)
+    with contextlib.closing(h5py.h5f.open(**file_id_args)) as file_id:
+        with h5py.File(file_id, **h5_file_args) as h5_file:
+            return keras.models.load_model(h5_file)
 
+def load_pickle(bucket_resource_path):
+    pickle_file = bucket.get_blob(bucket_resource_path)
+    return pickle.loads(pickle_file.download_as_string())   
+
+# Begin initialization of resources immediately at startup
+# Load files from GCP cloud storage
+global DNN_MODEL, DNN_VECTORIZER, NB_MODEL, NB_VECTORIZER, NB_TRANSFORMER
+DNN_MODEL = load_keras_model('gs://sachatml.appspot.com/DNN/GloVe_LSTM_SA_Classifier.h5')
+DNN_VECTORIZER = load_pickle('DNN/lstm_vectorizer.pickle')
+NB_MODEL = load_pickle('NB/NB_Multinomial.sav')
+NB_VECTORIZER = load_pickle('NB/count_vectorizer.pickle')
+NB_TRANSFORMER = load_pickle('NB/TFID_Transformer.pickle')
+
+# -------------------------------------------------- Service Prediction Endpoints --------------------------------------------------
 
 class NaiveBayes(Resource):
     def __init__(self):
-        self.model = pickle.load(open('Models/Trained_Models/NB/NB_Multinomial.sav', 'rb'))
-        self.vectorizer = pickle.load(open("Models/Trained_Models/NB/count_vectorizer.pickle", "rb"))
-        self.transformer = pickle.load(open("Models/Trained_Models/NB/TFID_Transformer.pickle", "rb"))
+        self.model = NB_MODEL
+        self.vectorizer = NB_VECTORIZER
+        self.transformer = NB_TRANSFORMER
+
+    def vectorize(self, data):
+        # turn text into count vector
+        msg_counts = self.vectorizer.transform(data)
+        # turn into tfidf vector
+        return self.transformer.transform(msg_counts)  
 
     # Parse message into similar format that model was trained on with movie reviews
     def parse_msg(self, msg):
@@ -48,29 +85,25 @@ class NaiveBayes(Resource):
         data = DataFrame({ 'review' : [msg] })
         trim_data(data)
         cleaned_msg = list(data['review'])
+        return self.vectorize(cleaned_msg)
 
-        # turn text into count vector
-        msg_counts = self.vectorizer.transform(cleaned_msg)
-
-        # turn into tfidf vector
-        return self.transformer.transform(msg_counts)  
+    def predict(self, msg):
+        msg_vector = self.parse_msg(msg)
+        return self.model.predict(msg_vector).item(0)
 
     # POST endpoint reads Message text from request body, serves response with Score
     def post(self):
         args = parser.parse_args()
         msg = args['Message']
-        msg = self.parse_msg(msg)
-        sentiment = self.model.predict(msg).item(0)
-
+        sentiment = self.predict(msg)
+    
         return jsonify({ 'Sentiment' : sentiment })
 
 
 class DeepNeuralNet(Resource):
     def __init__(self):
-        if not (os.path.exists('tmp/GloVe_LSTM_SA_Classifier.h5') and os.path.exists('tmp/lstm_vectorizer.pickle')):
-            load_files()
-        self.model = keras.models.load_model('tmp/GloVe_LSTM_SA_Classifier.h5')
-        self.vectorizer = pickle.load(open('tmp/lstm_vectorizer.pickle', 'rb'))
+        self.model = DNN_MODEL
+        self.vectorizer = DNN_VECTORIZER
 
     # Convert message to pass to model
     def vectorize(self, data):
@@ -100,6 +133,8 @@ class DeepNeuralNet(Resource):
 
         return jsonify({ 'Sentiment' : sentiment })
 
+
+# -------------------------------------------------- Server Routing Configuration --------------------------------------------------
 
 # Deployed production route, DO NOT use for development 
 # (cd to react_frontend and run yarn start and yarn start-api from two terminals instead)
