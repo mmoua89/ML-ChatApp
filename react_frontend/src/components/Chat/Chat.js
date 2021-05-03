@@ -127,7 +127,7 @@ const Chat = ({ location }) => {
     // Retrieve NB sentiment from the ML prediction server for the message
     await getSentimentNB(userMsg);
 
-    setTimeout(function() { sendMessage(NB.name, NB.answer + NB.sentiment) }, sentimentDelay / 3);    // Send user the sentiment
+    setTimeout(function() { sendMessage(NB.name, NB.answer + NB.sentiment) }, sentimentDelay / 2);    // Send user the sentiment
     if(callback)
       setTimeout(function() { callback(userMsg, function(){}) }, thinkDelay);                         // Call the other bot if not yet called                                 
   }
@@ -146,7 +146,7 @@ const Chat = ({ location }) => {
     // Retrieve the DNN sentiment from the ML prediction server for the message
     await getSentimentDNN(userMsg);
 
-    setTimeout(function() { sendMessage(DNN.name, DNN.answer + DNN.sentiment) }, sentimentDelay / 3); // Send user the sentiment
+    setTimeout(function() { sendMessage(DNN.name, DNN.answer + DNN.sentiment) }, sentimentDelay / 2); // Send user the sentiment
     if(callback)
       setTimeout(function() { callback(userMsg, function(){}) }, thinkDelay);                         // Call the other bot if not yet called                                 
   }
@@ -170,8 +170,8 @@ const Chat = ({ location }) => {
   // Send introduction message once user joins room
   const sendIntro = () => {
     let welcomeDelay = getDelay() / 2;
-    let introDelay = welcomeDelay + getDelay();
-    let sentimentDelay = introDelay + getDelay();
+    let introDelay = welcomeDelay + (getDelay() * 1.5);
+    let sentimentDelay = introDelay + (getDelay() * 1.5);
     
     setTimeout(function() { 
       sendMessage("Admin", `Welcome to sentiment analyzer ${humanUser}!`) 
