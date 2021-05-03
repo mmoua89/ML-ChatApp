@@ -51,11 +51,11 @@ class NaiveBayes(Resource):
 
 class DeepNeuralNet(Resource):
     def __init__(self):
-        self.model = keras.models.load_model('Models/movie_lstm')
-        self.tokenizer = pickle.load(open('Models/review_tokenizer.pickle', 'rb'))
+        self.model = keras.models.load_model('Models/Trained_Models/GloVe_LSTM_SA_Classifier.h5')
+        self.vectorizer = pickle.load(open('Models/lstm_vectorizer.pickle', 'rb'))
 
     def vectorize(self, data):
-        vectorized_txt = self.tokenizer.texts_to_sequences(data['review'].values)
+        vectorized_txt = self.vectorizer.texts_to_sequences(data['review'].values)
         vectorized_txt = pad_sequences(vectorized_txt, padding='post', maxlen=100)
         return vectorized_txt
 
