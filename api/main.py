@@ -2,19 +2,11 @@
 
 from flask import Flask, render_template, jsonify
 from flask_restful import Resource, Api, reqparse
-from sklearn.feature_extraction.text import CountVectorizer
 from pandas import DataFrame
-import random
-import pickle  
+import pickle5 as pickle  
 from clean_data import trim_data
 import os
-import keras
-from tensorflow.keras.layers.experimental.preprocessing import TextVectorization
-from keras.preprocessing.sequence import pad_sequences
-
-from tensorflow.python.lib.io.file_io import FileIO
-import contextlib
-import h5py
+import random
 
 # -------------------------------------------------- Setup Configuration --------------------------------------------------
 
@@ -25,32 +17,14 @@ parser = reqparse.RequestParser()
 parser.add_argument("Message")
 
 # GCP Credentials
+import googleapiclient.discovery
 from google.cloud import storage
+from google.api_core.client_options import ClientOptions
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "key.json"                                       
 client = storage.Client()
 bucket = client.get_bucket('sachatml.appspot.com')
 
 # -------------------------------------------------- Initialization Functions --------------------------------------------------
-
-def load_keras_model(gs_resource_path):
-    model_file = FileIO(gs_resource_path, mode='rb')
-    file_access_property_list = h5py.h5p.create(h5py.h5p.FILE_ACCESS)
-    file_access_property_list.set_fapl_core(backing_store=False)
-    file_access_property_list.set_file_image(model_file.read())  
-    file_id_args = {
-        'fapl': file_access_property_list,
-        'flags': h5py.h5f.ACC_RDONLY,
-        'name': b'this should never matter',
-    }
-    h5_file_args = {
-        'backing_store': False,
-        'driver': 'core',
-        'mode': 'r',
-    }
-    # Create temporary "file" in RAM to load (since Google AppEngine does not allow Read/Write)
-    with contextlib.closing(h5py.h5f.open(**file_id_args)) as file_id:
-        with h5py.File(file_id, **h5_file_args) as h5_file:
-            return keras.models.load_model(h5_file)
 
 def load_pickle(bucket_resource_path):
     pickle_file = bucket.get_blob(bucket_resource_path)
@@ -58,9 +32,10 @@ def load_pickle(bucket_resource_path):
 
 # Begin initialization of resources immediately at startup
 # Load files from GCP cloud storage
-global DNN_MODEL, DNN_VECTORIZER, NB_MODEL, NB_VECTORIZER, NB_TRANSFORMER
-DNN_MODEL = load_keras_model('gs://sachatml.appspot.com/DNN/GloVe_LSTM_SA_Classifier.h5')
+global DNN_VECTORIZER, NB_MODEL, NB_VECTORIZER, NB_TRANSFORMER, pad_sequences
+DNN_VECTORIZER = NB_MODEL = NB_VECTORIZER = NB_TRANSFORMER = pad_sequences = None
 DNN_VECTORIZER = load_pickle('DNN/lstm_vectorizer.pickle')
+pad_sequences = load_pickle('DNN/pad_sequences.pickle')
 NB_MODEL = load_pickle('NB/NB_Multinomial.sav')
 NB_VECTORIZER = load_pickle('NB/count_vectorizer.pickle')
 NB_TRANSFORMER = load_pickle('NB/TFID_Transformer.pickle')
@@ -96,13 +71,12 @@ class NaiveBayes(Resource):
         args = parser.parse_args()
         msg = args['Message']
         sentiment = self.predict(msg)
-    
+        # sentiment = random.choice(['positive', 'negative'])
         return jsonify({ 'Sentiment' : sentiment })
 
 
 class DeepNeuralNet(Resource):
     def __init__(self):
-        self.model = DNN_MODEL
         self.vectorizer = DNN_VECTORIZER
 
     # Convert message to pass to model
@@ -116,11 +90,34 @@ class DeepNeuralNet(Resource):
         data = DataFrame({ 'review' : [msg] })
         trim_data(data)
         return self.vectorize(data)
-    
+
     def predict(self, msg):
+        # return random.choice([True, False])
+
+        # Clean and convert message to vector 
         msg_vector = self.parse_msg(msg)
-        isPositive = self.model.predict(msg_vector) > 0.5
-        return isPositive
+
+        # Generate request to GCP AI platform for prediction 
+        PROJECT="sachatml"
+        MODEL_NAME="SA_Chat"
+        VERSION_NAME="chat_app_dnn"
+        REGION="us-central1"
+        
+        api_endpoint = "https://{}.googleapis.com".format(REGION + '-ml')
+        client_options = ClientOptions(api_endpoint=api_endpoint)
+        service = googleapiclient.discovery.build('ml', 'v1', client_options=client_options)
+        name = 'projects/{}/models/{}/versions/{}'.format(PROJECT, MODEL_NAME, VERSION_NAME)
+
+        # Send request to the cloud hosted model
+        response = service.projects().predict(
+            name=name,
+            body={'instances': msg_vector.tolist()}
+        ).execute()
+        if 'error' in response:
+            raise RuntimeError(response['error'])
+
+        # Using 0.5 score threshold, serve the prediction
+        return response['predictions'][0][0] > 0.5
 
     # POST endpoint reads Message text from request body, serves response with Score
     def post(self):

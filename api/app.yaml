@@ -1,5 +1,5 @@
 runtime: python
-entrypoint: gunicorn -b :$PORT main:app
+entrypoint: gunicorn -b :$PORT main:app --timeout 0
 env: flex
 
 runtime_config:

@@ -52,6 +52,12 @@ def remove_stops(text):
 
 
 def trim_data(data):
+    # Download necessary nltk corpus if not exist
+    try:
+        nltk.data.find('stopwords')
+    except LookupError:
+        nltk.download('stopwords')
+        
     # convert all text in 'review' column to lowercase
     data['review'] = data['review'].str.lower()
 
@@ -70,11 +76,6 @@ def trim_data(data):
 
 
 if __name__ == '__main__':
-    # Download necessary nltk corpus if not exist
-    try:
-        nltk.data.find('stopwords')
-    except LookupError:
-        nltk.download('stopwords')
 
     # Read raw dataset
     data = pd.read_csv('IMDB_Dataset.csv')
