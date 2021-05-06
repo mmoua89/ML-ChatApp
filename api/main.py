@@ -3,10 +3,14 @@
 from flask import Flask, render_template, jsonify
 from flask_restful import Resource, Api, reqparse
 from pandas import DataFrame
-import pickle5 as pickle  
+from google.api_core.client_options import ClientOptions
+import googleapiclient.discovery
 from clean_data import trim_data
 import os
 import random
+import json
+import requests
+import numpy as np
 
 # -------------------------------------------------- Setup Configuration --------------------------------------------------
 
@@ -15,87 +19,48 @@ app = Flask(__name__, static_folder="build/static", template_folder="build")
 api = Api(app)
 parser = reqparse.RequestParser()
 parser.add_argument("Message")
+# os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "key.json"                                       
 
-# GCP Credentials
-import googleapiclient.discovery
-from google.cloud import storage
-from google.api_core.client_options import ClientOptions
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "key.json"                                       
-client = storage.Client()
-bucket = client.get_bucket('sachatml.appspot.com')
+# -------------------------------------------------- Utility Functions --------------------------------------------------
 
-# -------------------------------------------------- Initialization Functions --------------------------------------------------
+# Strip message of any symbols, numbers, set all to lowercase, stem all words
+def clean_msg(msg):
+    data = DataFrame({ 'review' : [msg] })
+    trim_data(data)
+    return list(data['review'])[0]
 
-def load_pickle(bucket_resource_path):
-    pickle_file = bucket.get_blob(bucket_resource_path)
-    return pickle.loads(pickle_file.download_as_string())   
-
-# Begin initialization of resources immediately at startup
-# Load files from GCP cloud storage
-global DNN_VECTORIZER, NB_MODEL, NB_VECTORIZER, NB_TRANSFORMER, pad_sequences
-DNN_VECTORIZER = NB_MODEL = NB_VECTORIZER = NB_TRANSFORMER = pad_sequences = None
-DNN_VECTORIZER = load_pickle('DNN/lstm_vectorizer.pickle')
-pad_sequences = load_pickle('DNN/pad_sequences.pickle')
-NB_MODEL = load_pickle('NB/NB_Multinomial.sav')
-NB_VECTORIZER = load_pickle('NB/count_vectorizer.pickle')
-NB_TRANSFORMER = load_pickle('NB/TFID_Transformer.pickle')
+# Send HTTP POST request to GCP cloud utility functions
+def gcp_post(resource_function, msg, key):
+    url = 'https://us-central1-sachatml.cloudfunctions.net/' + resource_function
+    res = requests.post(url, json={'Message' : msg}, headers={'Content-type':'application/json'})
+    if(res.status_code == requests.codes.ok):
+        return res.json()[key]
+    else:
+        return None
 
 # -------------------------------------------------- Service Prediction Endpoints --------------------------------------------------
 
 class NaiveBayes(Resource):
-    def __init__(self):
-        self.model = NB_MODEL
-        self.vectorizer = NB_VECTORIZER
-        self.transformer = NB_TRANSFORMER
-
-    def vectorize(self, data):
-        # turn text into count vector
-        msg_counts = self.vectorizer.transform(data)
-        # turn into tfidf vector
-        return self.transformer.transform(msg_counts)  
-
-    # Parse message into similar format that model was trained on with movie reviews
-    def parse_msg(self, msg):
-        # Clean message
-        data = DataFrame({ 'review' : [msg] })
-        trim_data(data)
-        cleaned_msg = list(data['review'])
-        return self.vectorize(cleaned_msg)
-
     def predict(self, msg):
-        msg_vector = self.parse_msg(msg)
-        return self.model.predict(msg_vector).item(0)
+        cleaned_msg = [clean_msg(msg)]
+
+        # Sent HTTP request to cloud function to predict sentiment of the message
+        return gcp_post('nb_predict', cleaned_msg, 'Sentiment')
 
     # POST endpoint reads Message text from request body, serves response with Score
     def post(self):
         args = parser.parse_args()
         msg = args['Message']
         sentiment = self.predict(msg)
-        # sentiment = random.choice(['positive', 'negative'])
         return jsonify({ 'Sentiment' : sentiment })
 
 
 class DeepNeuralNet(Resource):
-    def __init__(self):
-        self.vectorizer = DNN_VECTORIZER
-
-    # Convert message to pass to model
-    def vectorize(self, data):
-        vectorized_txt = self.vectorizer.texts_to_sequences(data['review'].values)
-        vectorized_txt = pad_sequences(vectorized_txt, padding='post', maxlen=100)
-        return vectorized_txt
-
-    # Clean message
-    def parse_msg(self, msg):
-        data = DataFrame({ 'review' : [msg] })
-        trim_data(data)
-        return self.vectorize(data)
-
     def predict(self, msg):
-        # return random.choice([True, False])
+        cleaned_msg = clean_msg(msg)
 
-        # Clean and convert message to vector 
-        msg_vector = self.parse_msg(msg)
+        # Send HTTP request to cloud function to vectorize the message
+        msg_vector = gcp_post('parse_dnn_msg', cleaned_msg, 'Message')
 
         # Generate request to GCP AI platform for prediction 
         PROJECT="sachatml"
@@ -111,7 +76,7 @@ class DeepNeuralNet(Resource):
         # Send request to the cloud hosted model
         response = service.projects().predict(
             name=name,
-            body={'instances': msg_vector.tolist()}
+            body={'instances': msg_vector}
         ).execute()
         if 'error' in response:
             raise RuntimeError(response['error'])
@@ -129,7 +94,6 @@ class DeepNeuralNet(Resource):
             sentiment = "negative"
 
         return jsonify({ 'Sentiment' : sentiment })
-
 
 # -------------------------------------------------- Server Routing Configuration --------------------------------------------------
 

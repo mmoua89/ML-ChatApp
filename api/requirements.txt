@@ -5,8 +5,6 @@ Flask-RESTful==0.3.8
 itsdangerous==1.1.0
 Jinja2==2.11.3
 MarkupSafe==1.1.1
-pickle-mixin==1.0.2
-pickle5==0.0.11
 python-dotenv==0.17.0
 pytz==2021.1
 six==1.15.0
@@ -18,7 +16,6 @@ google-auth==1.30.0
 google-auth-httplib2==0.1.0
 google-auth-oauthlib==0.4.4
 google-cloud-core==1.6.0
-google-cloud-storage==1.38.0
 google-crc32c==1.1.2
 google-pasta==0.2.0
 google-resumable-media==1.2.0
@@ -27,13 +24,5 @@ pandas==1.1.5
 nltk==3.6.2
 regex==2021.4.4
 beautifulsoup4==4.9.3
-tensorboard==2.5.0
-tensorboard-data-server==0.6.0
-tensorboard-plugin-wit==1.8.0
-tensorflow==2.4.1
-tensorflow-estimator==2.4.0
-Keras==2.4.3
-Keras-Preprocessing==1.1.2
-scikit-learn==0.24.1
 setuptools==41.0.0
 grpcio==1.32.0
