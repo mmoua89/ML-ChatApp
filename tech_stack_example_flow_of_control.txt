@@ -1,12 +1,11 @@
 Summary:
 
 	- Deployment:
-		- I will set up a Google Cloud Compute webserver for our project 
+		- Google Cloud App Engine webserver for our project 
 
 	- Front End:
 		- ReactJS
 		- Modified UI from Chat App Client
-		- Deployed to https://SentimentScore.appspot.com for example
 
 	- Back End:
 		- Python 
@@ -23,12 +22,12 @@ Summary:
 		- Server:
 			- REST architecture that will support two endpoints:
 
-			```POST https://SentimentScore.appspot.com/api/score/DNN```
-			```POST https://SentimentScore.appspot.com/api/score/NBayes```
+			/api/score/DNN
+			/api/score/NBayes
 
 
 	- Example Flow of Control
-		1. Client browser loads webpage https://SentimentScore.appspot.com
+		1. Client browser loads webpage 
 
 		2. Client browser loads modified chat app UI
 
@@ -41,8 +40,8 @@ Summary:
 		6. React UI makes a HTTP request to the our backend api endpoint to the 
 			```
 			URL:
-				POST https://SentimentScore.appspot.com/api/score/DNN 		(if DNN button was selected)
-				POST https://SentimentScore.appspot.com/api/score/DNN 		(if NBayes button was selected)
+				POST /api/score/DNN 		(if DNN button was selected)
+				POST /api/score/DNN 		(if NBayes button was selected)
 			Header:
 				Content-Type: application/json
 			Request Body:
@@ -53,11 +52,11 @@ Summary:
 
 		7. API receives and routes request to the appropriate ML model
 
-		8. ML model receives the text and calls predict(text: str) -> float
+		8. ML model receives the text and calls predict(text: str) -> bool
 
-		9. predict() analyses the text and outputs a probabiltiy value between 0 and 1 				{ 0 is most negative, 1 is most positive }
+		9. predict() analyses the text and outputs a probabiltiy value 
 
-		10. Probability value is scaled and rounded to a value between 0 and 5 and returned to API 	{ 0 is most negative, 5 is most positive }		
+		10. Probability value determines { positive, negative } classification
 
 		11. API generates and serves HTTP response to the fufill the request
 			Header:
