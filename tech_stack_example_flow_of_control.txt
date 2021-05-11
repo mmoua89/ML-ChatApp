@@ -5,25 +5,25 @@ Summary:
 
 	- Front End:
 		- ReactJS
-		- Modified UI from Chat App Client
 
 	- Back End:
 		- Python 
 
 		- Modules:
 			- Both models will define a function:
-				predict(text: str) -> float
+				predict(text: str) -> bool
 
 			- Deep Neural Network Model
 				- Architecture implemented and trained in Keras
 
 			- Naive Bayes Model
+				- Trained with sklearn
 
 		- Server:
 			- REST architecture that will support two endpoints:
 
-			/api/score/DNN
-			/api/score/NBayes
+			/api/predict/DeepNeuralNet
+			/api/predict/NaiveBayes
 
 
 	- Example Flow of Control
@@ -31,44 +31,38 @@ Summary:
 
 		2. Client browser loads modified chat app UI
 
-		3. User clicks a button to pick whether or not to select: { DNN model or NBayes model }
+		3. User enters into message box text: "I had a bad day today, everything is going wrong for me."
 
-		4. User enters into message box text: "Machine learning has way too much math"
+		4. User presses send button
 
-		5. User presses send button
-
-		6. React UI makes a HTTP request to the our backend api endpoint to the 
+		5. React UI makes a HTTP request to the our backend api endpoint to the 
 			```
 			URL:
-				POST /api/score/DNN 		(if DNN button was selected)
-				POST /api/score/DNN 		(if NBayes button was selected)
+				POST /api/predict/DeepNeuralNet 		
+				POST /api/predict/NaiveBayes 		
 			Header:
 				Content-Type: application/json
 			Request Body:
 				{
-					"text" : "Machine learning is terrible because there is too math"
+					"text" : "I had a bad day today, everything is going wrong for me."
 				}
 			```
 
-		7. API receives and routes request to the appropriate ML model
+		6. API receives and routes request to the appropriate ML model
 
-		8. ML model receives the text and calls predict(text: str) -> bool
+		7. ML model receives the text and calls predict(text: str) -> bool
 
-		9. predict() analyses the text and outputs a probabiltiy value 
+		8. predict() analyses the text and outputs a probabiltiy value 
 
-		10. Probability value determines { positive, negative } classification
+		9. Probability value determines { positive, negative } classification
 
-		11. API generates and serves HTTP response to the fufill the request
+		10. API generates and serves HTTP response to the fufill the request
 			Header:
 				Content-Type: application/json
 			Response Body:
 				{
-					"score" : 0
+					"Sentiment" : "negative"
 				}
 			```
 
-		12. React parses the response, based on the score it received highlights one of the boxes {0 through 5} to show user the predicted sentiment score of their text
-
-		13. Repeat starting from step #3 until client leaves webpage
-
-
+		11. Repeat starting from step #3 until client leaves webpage

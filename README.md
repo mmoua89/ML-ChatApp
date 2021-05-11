@@ -3,9 +3,7 @@ Deployed at: https://SAChatML.appspot.com/
 
 ## Overview
 
-Sentiment analysis chat application runs between a user, **Naive Bayes Bot**, and a **Deep Neural Net Bot** to predict a sentiment score from 0 (negative) to 4 (positive) each time the user sends a message.
-
-**NOTE:** API calls currently return a random number between 0 and 4 until implemented. 
+Sentiment analysis chat application runs between a user, **Naive Bayes Bot**, and a **Deep Neural Net Bot** to predict a sentiment class of the messag as either positive or negative. API calls process and forward user mesasge to the cloud deployed models on GCP AI Platform via HTTP.  
 
 ### Development Quick Start
 
@@ -44,7 +42,7 @@ Each endpoint will load its pretrained ML model and:
 
 - Run a prediction on the message specified by the request
 
-- Serve a response containing the predicted sentiment score
+- Serve a response containing the predicted sentiment class
 
 ### Request Formating
 
@@ -76,8 +74,8 @@ The request body should specify a JSON with the single attribute **Message** con
 
 ```json
 {
-	"Score" : 4
+	"Sentiment" : "positive"
 }
 ```
 
-Where the response will contain a single **Score** attribute JSON with a value **between 0 and 4**.
+Where the response will contain a single **Sentiment** attribute JSON with a value **{ positive, negative }**.
