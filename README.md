@@ -76,8 +76,14 @@ The request body should specify a JSON with the single attribute **Message** con
 
 ```json
 {
-	"Score" : 4
+	"Sentiment" : "positive"
+}
+```
+or
+```json
+{
+	"Sentiment" : "negative"
 }
 ```
 
-Where the response will contain a single **Score** attribute JSON with a value **between 0 and 4**.
+Where the response will contain a single **Sentiment** attribute JSON with a value **{ positive, negative }**.
