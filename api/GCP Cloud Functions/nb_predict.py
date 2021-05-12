@@ -12,11 +12,12 @@ def load_pickle(bucket_resource_path, bucket):
 
 """HTTP Cloud Function.
 Args:
-    request (flask.Request): The request object with input message
+    request (flask.Request): The request object
+    containing the user message
 Returns:
-    The response text containing the predicted sentiment
+    The sentiment score of the message
 """
-def parse_msg(request):
+def predict(request):
     # Load resources from cloud storage
     client = storage.Client()
     bucket = client.get_bucket('sachatml.appspot.com')
@@ -25,10 +26,11 @@ def parse_msg(request):
     NB_VECTORIZER = load_pickle('NB/count_vectorizer.pickle', bucket)
     NB_TRANSFORMER = load_pickle('NB/TFID_Transformer.pickle', bucket)
 
-    # Parse message and generate prediction
     request_json = request.get_json(silent=True)
+    # request_args = request.args
+
+    # Parse message and generate prediction
     msg = list(request_json['Message'])
-    
     msg_counts = NB_VECTORIZER.transform(msg)                       # get count vector for the cleaned message
     msg_vector = NB_TRANSFORMER.transform(msg_counts)               # turn into tfidf vector
     sentiment = NB_MODEL.predict(msg_vector).item(0)                # run prediction on msg vector
