@@ -5,12 +5,66 @@ from flask_restful import Resource, Api, reqparse
 from pandas import DataFrame
 from google.api_core.client_options import ClientOptions
 import googleapiclient.discovery
-from clean_data import trim_data
 import os
 import random
 import json
 import requests
 import numpy as np
+
+import nltk
+import re
+from nltk.tokenize.toktok import ToktokTokenizer
+from bs4 import BeautifulSoup
+from nltk.corpus import stopwords
+import csv
+
+
+# -------------------------------------------------- Message Cleaning Functions --------------------------------------------------
+
+def denoise_text(text):
+    soup = BeautifulSoup(text, 'html.parser')       # trim html format out
+    new_text = soup.get_text()
+    new_text = re.sub('\[[^]]*\]', '', new_text)    # remove between square brackets
+    return new_text
+def remove_special_chars(text):
+    pattern = r'[^a-zA-Z\s]' #raw regex, exclude everything except letters and a space
+    new_text = re.sub(pattern, '', text)
+    return new_text
+def stemmer(text):
+    # Convert similar words to root word
+    ps = nltk.porter.PorterStemmer()
+    new_text = ' '.join([ps.stem(word) for word in text.split()])
+    return new_text
+def remove_stops(text):
+    tokenizer = ToktokTokenizer()
+    tokens = tokenizer.tokenize(text)
+    stop_words = set(stopwords.words("english"))
+
+    # Remove negation words from our exclude set
+    for word in ['not','nor','never','no']:
+        if word in stop_words: stop_words.remove(word)
+    new_text = ' '.join([w for w in tokens if w not in stop_words])
+
+    return new_text
+
+def trim_data(data, stem_words):
+    # Download necessary nltk corpus if not exist
+    try:
+        nltk.data.find('stopwords')
+    except LookupError:
+        nltk.download('stopwords')
+    # convert all text in 'review' column to lowercase
+    data['review'] = data['review'].str.lower()
+    # Remove html strips and all noises text
+    data['review'] = data['review'].apply(denoise_text)
+    # Remove special chars
+    data['review'] = data['review'].apply(remove_special_chars)
+    # remove stopwords
+    data['review'] = data['review'].apply(remove_stops)
+
+    # Stem all word to their common word
+    if(stem_words):
+        data['review'] = data['review'].apply(stemmer)
 
 # -------------------------------------------------- Setup Configuration --------------------------------------------------
 
@@ -24,9 +78,9 @@ parser.add_argument("Message")
 # -------------------------------------------------- Utility Functions --------------------------------------------------
 
 # Strip message of any symbols, numbers, set all to lowercase, stem all words
-def clean_msg(msg):
+def clean_msg(msg, stem_words):
     data = DataFrame({ 'review' : [msg] })
-    trim_data(data)
+    trim_data(data, stem_words)
     return list(data['review'])[0]
 
 # Send HTTP POST request to GCP cloud utility functions
@@ -42,7 +96,7 @@ def gcp_post(resource_function, msg, key):
 
 class NaiveBayes(Resource):
     def predict(self, msg):
-        cleaned_msg = [clean_msg(msg)]
+        cleaned_msg = [clean_msg(msg, stem_words=True)]
 
         # Sent HTTP request to cloud function to predict sentiment of the message
         return gcp_post('nb_predict', cleaned_msg, 'Sentiment')
@@ -57,15 +111,16 @@ class NaiveBayes(Resource):
 
 class DeepNeuralNet(Resource):
     def predict(self, msg):
-        cleaned_msg = clean_msg(msg)
+        # Clean and prepare message to be passed to cloud prediction
+        cleaned_msg = clean_msg(msg, stem_words=False)
 
         # Send HTTP request to cloud function to vectorize the message
-        msg_vector = gcp_post('parse_dnn_msg', cleaned_msg, 'Message')
+        # msg_vector = gcp_post('parse_dnn_msg', cleaned_msg, 'Message')
 
         # Generate request to GCP AI platform for prediction 
         PROJECT="sachatml"
         MODEL_NAME="SA_Chat"
-        VERSION_NAME="chat_app_dnn"
+        VERSION_NAME="stacked_lstm_unstemmed"
         REGION="us-central1"
         
         api_endpoint = "https://{}.googleapis.com".format(REGION + '-ml')
@@ -76,7 +131,8 @@ class DeepNeuralNet(Resource):
         # Send request to the cloud hosted model
         response = service.projects().predict(
             name=name,
-            body={'instances': msg_vector}
+            # body={'instances': msg_vector}
+            body={ 'instances': [[cleaned_msg]] }
         ).execute()
         if 'error' in response:
             raise RuntimeError(response['error'])
